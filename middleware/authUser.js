@@ -9,7 +9,7 @@ const authUser = async (req, res, next) =>{
     try{
     //    const {utoken} = req.headers;
     const authHeader = req.headers.authorization; 
-
+        
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return next(new ErrorHandler("No token provided or wrong format.", 401));
         }
@@ -17,6 +17,7 @@ const authUser = async (req, res, next) =>{
         // Split the string: ["Bearer", "YOUR_TOKEN"] and take the second part
         const utoken = authHeader.split(' ')[1];
 
+        console.log("TOKEN ",utoken);
 
        if(!utoken){
         return next(new ErrorHandler("You are not authorize.", 400));

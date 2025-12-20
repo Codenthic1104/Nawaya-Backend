@@ -139,6 +139,8 @@ async function enableMembership(req, res) {
         // const {utoken} = req.headers;
 
         const utoken = req.utoken;
+
+        console.log(utoken);
         if (!utoken) throw new ErrorHandler("Token not found", 400);
 
         const token_decode = jwt.verify(utoken, process.env.JWT_SECRET);
