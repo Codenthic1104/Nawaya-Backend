@@ -248,8 +248,8 @@ const stripeWebHook = async (req, res, next) => { // Removed 'next' here, handle
 
     console.log(`🔔 Received Stripe Event: ${event.type}`);
     const dataObject = event.data.object;
-    // const stripeCustomerId = dataObject.customer;
-    const stripeCustomerId = "cus_TdNNVATmmzyH7q";
+    const stripeCustomerId = dataObject.customer;
+    // const stripeCustomerId = "cus_TdNNVATmmzyH7q";
 
     try {
         switch (event.type) {
