@@ -6,7 +6,7 @@ class ErrorHandler extends Error{
 
         Error.captureStackTrace(this, this.constructor.name);
     }
-
+  
 };
 
 export default ErrorHandler;
