@@ -33,7 +33,7 @@ const adminLogin = async(req, res,next) =>{
         }
 
         const isMatch = await bcrypt.compare(password, admin.password);
-        console.log(isMatch)
+
         if(isMatch){
             const token = jwt.sign({id : admin._id}, process.env.JWT_SECRET);
             res.status(200).json({status : "success", message : "Login Successfully." ,token})
@@ -57,9 +57,10 @@ const adminLogin = async(req, res,next) =>{
 const adminDashboard = async(req, res,next) =>{
 
     try{
-        const userData = await userModel.find({}).select({password : 0});
-        // const totalPaid = userData.filter((data)=>(data.userType == "premium")).length;
-       
+        const userData = await userModel.find({}).select({password : 0, 
+        stripeCustomerId: 0,
+        lastPaymentDate: 0
+        });
         res.status(200).json({status : "success", message: "Data fetched successfully", data: {userData}});
     }
     catch(e){

@@ -14,6 +14,7 @@ const userScheme = new mongoose.Schema({
         default : ""
     },
     lastPaymentDate : {type : Date, default : ""},
+    country : {type : String, default : ""}
 }, {minimize : false, timestamps : true});
 
 

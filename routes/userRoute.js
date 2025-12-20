@@ -12,8 +12,7 @@ const userRouter = express.Router();
 userRouter.post("/addSurveyData", addServeryData);
 userRouter.post("/login", userLogin);
 userRouter.get("/userDashboard", authUser ,userDashboard);
-userRouter.post("/enableMembership", authUser ,enableMembership);
-// userRouter.post("/webhook/stripe",express.raw({ type: 'application/json' }), stripeWebHook);
+userRouter.get("/enableMembership", authUser ,enableMembership);
 
 
 

@@ -24,7 +24,8 @@ const addServeryData = async(req, res,next) =>{
             seeking,
             areaOfInterest,
             languagePreferance,
-            grow
+            grow,
+            country
         } = req.body;
 
         const password = process.env.PASSWORD;
@@ -38,7 +39,6 @@ const addServeryData = async(req, res,next) =>{
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(`${password}`, salt);
 
-        console.log(password, hashedPassword)
 
         const userData = {
             name,
@@ -47,21 +47,24 @@ const addServeryData = async(req, res,next) =>{
             password : hashedPassword,
             areaOfInterest,
             languagePreferance,
-            grow
+            grow,
+            country
+
         };
 
         const newUser = new userModel(userData);
         await newUser.save();
 
         
-        const token = jwt.sign({id : user._id}, process.env.JWT_SECRET);
-        res.status(200).json({status : "success", message : "Data Saved Successfully.", data:{token}});
+        const token = jwt.sign({id : newUser._id}, process.env.JWT_SECRET);
+        res.status(200).json({status : "success", message : "Form Submitted Successfully.", data:{token}});
     }
     catch(e){
         if(e.code ===  11000){
-            return next(new ErrorHandler( "This email already exists.", 400))
+           res.status(400).json({stauts : "fail", message:  "This email already exists."})
         }
-        return next(new ErrorHandler(e.message, 400));
+        res.status(400).json({stauts : "fail", message:  e.message})
+        
     }
 };
 
@@ -75,12 +78,11 @@ const userLogin = async(req, res,next) =>{
             password
         } = req.body;
 
-        console.log(req.body);
 
         const user = await userModel.findOne({email});
 
         if(!user){
-            return next(new ErrorHandler( "User doen't exist.", 400))
+            res.status(400).json({status : "fail", message : "Account does not exist."})
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -89,15 +91,12 @@ const userLogin = async(req, res,next) =>{
             res.status(200).json({status : "success", message : "Login Successfully." ,token})
         }
         else{
-            return next(new ErrorHandler( "Wrong Email or Password.", 400))
+             res.status(400).json({status : "fail", message : "Wrong Email or Password."})
         }
 
     }
     catch(e){
-        if(e.code ===  11000){
-            return next(new ErrorHandler( "This email already exists.", 400))
-        }
-        return next(new ErrorHandler(e.message, 400));
+         res.status(400).json({status : "fail", message : e.message});
     }
 };
 
@@ -106,7 +105,14 @@ const userLogin = async(req, res,next) =>{
 const userDashboard = async(req, res,next) =>{
 
     try{
-        res.status(200).json({status : 200, message : "Data Fetched successfully", data : []});
+        const utoken = req.utoken;
+        const user = req.user;
+
+        if(user.userType !== "premium"){
+            res.status(400).json({status: "fail", message : "Not a premium user" });
+        }
+
+        res.status(200).json({status : "success", message : "Premium User", data : {username : user.name}});
     }
     catch(e){
         return next(new ErrorHandler(e.message, 400));
@@ -130,9 +136,11 @@ async function enableMembership(req, res) {
     try {
 
         // Fetch professional data
-        const {utoken} = req.headers;
+        // const {utoken} = req.headers;
+
+        const utoken = req.utoken;
         if (!utoken) throw new ErrorHandler("Token not found", 400);
-        
+
         const token_decode = jwt.verify(utoken, process.env.JWT_SECRET);
             const user = await userModel.findOne({_id : token_decode.id}).select({password : 0});
             
@@ -152,7 +160,6 @@ async function enableMembership(req, res) {
             await user.save();
             }
 
-            console.log(user)
             
             
         // Generate Stripe checkout session
@@ -166,8 +173,8 @@ async function enableMembership(req, res) {
                 },
             ],
             mode: "subscription",
-            success_url: `${process.env.CLIENT_URI}/membership/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.CLIENT_URI}/membership/fail`,
+            success_url: `${process.env.CLIENT_URI}/login`,
+            cancel_url: `${process.env.CLIENT_URI}/`,
             metadata: {
                 token : utoken
             },
@@ -242,11 +249,11 @@ const stripeWebHook = async (req, res, next) => { // Removed 'next' here, handle
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (err) {
-        console.error("⚠️ Webhook Signature Failed:", err.message);
+    
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    console.log(`🔔 Received Stripe Event: ${event.type}`);
+ 
     const dataObject = event.data.object;
     const stripeCustomerId = dataObject.customer;
     // const stripeCustomerId = "cus_TdNNVATmmzyH7q";
@@ -255,18 +262,18 @@ const stripeWebHook = async (req, res, next) => { // Removed 'next' here, handle
         switch (event.type) {
             case 'checkout.session.completed':
             case 'invoice.paid':
-                console.log("💰 Processing Success for:", stripeCustomerId);
+             
                 // IMPORTANT: Ensure handlePaymentSucceeded ONLY uses the customer ID
                 await handlePaymentSucceeded(stripeCustomerId, next); 
                 break;
 
             case 'customer.subscription.deleted':
-                console.log("❌ Processing Deletion for:", stripeCustomerId);
+              
                 await handlePaymentFailed(stripeCustomerId, next);
                 break;
 
             case 'invoice.payment_failed':
-                console.log("⚠️ Processing Failed Payment for:", stripeCustomerId);
+            
                 await handlePaymentFailed(stripeCustomerId, next);
                 break;
         }
@@ -275,7 +282,7 @@ const stripeWebHook = async (req, res, next) => { // Removed 'next' here, handle
         return res.status(200).json({ received: true });
 
     } catch (error) {
-        console.error("🔥 Logic Error inside Webhook:", error.message);
+       
         // If an error happens here, we send a 500 but only if headers aren't sent
         if (!res.headersSent) {
             return res.status(500).json({ status: "error", message: error.message });
