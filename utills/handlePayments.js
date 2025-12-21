@@ -18,6 +18,9 @@ const handlePaymentSucceeded = async (customerStripeId, next) => {
                 }
             );
 
+            console.log("Upgraded the account");
+            console.log("Sending email to", user2.email);
+
 
             let option = {
                 email : user2.email,
@@ -47,6 +50,9 @@ const handlePaymentFailed = async (customerStripeId, next) => {
                 userType: 'waitlist', 
                 }
             );
+            
+            console.log("Downgraded the account");
+            console.log("Sending email to", user2.email);
 
             let option = {
                 email : user2.email,

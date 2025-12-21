@@ -120,16 +120,6 @@ const userDashboard = async(req, res,next) =>{
 };
 
 
-// const enableMembership  = async(req, res,next) =>{
-//     try{
-        
-//        const {utoken} = req.headers;
-//        console.log(utoken);
-//     }
-//     catch(e){
-//         return next(new ErrorHandler(e.message, 400));
-//     }
-// };
 
 
 async function enableMembership(req, res) {
@@ -175,7 +165,7 @@ async function enableMembership(req, res) {
                 },
             ],
             mode: "subscription",
-            success_url: `${process.env.CLIENT_URI}/login`,
+            success_url: `${process.env.CLIENT_URI}/thankyou`,
             cancel_url: `${process.env.CLIENT_URI}/`,
             metadata: {
                 token : utoken

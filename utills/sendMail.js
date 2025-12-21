@@ -17,7 +17,7 @@ const sendMail = async (option, next) =>{
 
         const {email, subject, type ,data} = option;
 
-        let html;
+        let html; 
 
 
         if(type == "welcome"){
@@ -27,6 +27,8 @@ const sendMail = async (option, next) =>{
         else if(type == "cancel membership"){
             html = cancelMembership(data.username, data.email)
         }
+
+        console.log("Sending mail to : ", email);
 
         const mailOptions= {
             from  : process.env.SMTP_EMAIL, 
