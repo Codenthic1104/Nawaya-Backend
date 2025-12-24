@@ -36,15 +36,15 @@ const addServeryData = async(req, res,next) =>{
             return next(new ErrorHandler( "Please Enter valid Email.", 400))   
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(`${password}`, salt);
-
+        // const salt = await bcrypt.genSalt(10);
+        // const hashedPassword = await bcrypt.hash(`${password}`, salt);
+ 
 
         const userData = {
             name,
             email,
             seeking,
-            password : hashedPassword,
+            // password : hashedPassword, 
             areaOfInterest,
             languagePreferance,
             grow,
@@ -164,7 +164,7 @@ async function enableMembership(req, res) {
                     quantity: 1,
                 },
             ],
-            mode: "subscription",
+            mode: "payment",
             success_url: `${process.env.CLIENT_URI}/thankyou`,
             cancel_url: `${process.env.CLIENT_URI}/`,
             metadata: {
@@ -252,13 +252,39 @@ const stripeWebHook = async (req, res, next) => { // Removed 'next' here, handle
 
     try {
         switch (event.type) {
-            case 'checkout.session.completed':
-            case 'invoice.paid':
+            // case 'checkout.session.completed':
+            // case 'invoice.paid':
              
-                // IMPORTANT: Ensure handlePaymentSucceeded ONLY uses the customer ID
-                await handlePaymentSucceeded(stripeCustomerId, next); 
-                break;
+            //     // IMPORTANT: Ensure handlePaymentSucceeded ONLY uses the customer ID
+            //     await handlePaymentSucceeded(stripeCustomerId, next); 
+            //     break;
 
+                case 'checkout.session.completed': {
+                    const session = event.data.object;
+
+                    // Check if the payment is actually successful
+                    if (session.payment_status === 'paid') {
+                        const stripeCustomerId = session.customer;
+                        
+                        // Log it to verify in your console
+                        console.log(`Payment confirmed for Customer: ${stripeCustomerId}`);
+
+                        // Call your success handler
+                        await handlePaymentSucceeded(stripeCustomerId, next);
+                        // await handlePaymentSucceeded("cus_TfB02vW79xOcdE", next);
+                    }
+                    break;
+                }
+
+                case 'invoice.paid': {
+                    const invoice = event.data.object;
+                    // Keep this only if you still have active recurring subscribers
+                    if (invoice.customer) {
+                        await handlePaymentSucceeded(invoice.customer, next);
+                        // await handlePaymentSucceeded("cus_TfB02vW79xOcdE", next);
+                    }
+                    break;
+                }
             case 'customer.subscription.deleted':
               
                 await handlePaymentFailed(stripeCustomerId, next);

@@ -21,7 +21,7 @@ const sendMail = async (option, next) =>{
 
 
         if(type == "welcome"){
-            html = welcomeEmail(data.username, "Nawaya Early Access", email)
+            html = welcomeEmail(data.username, "Nawaya Early Access", email, data.password);
         }
 
         else if(type == "cancel membership"){

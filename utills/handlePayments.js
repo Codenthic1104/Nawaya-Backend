@@ -2,6 +2,9 @@ import userModel from "../models/userData.js";
 import ErrorHandler from "./ErrorHandler.js";
 import Stripe from "stripe"
 import sendMail from "./sendMail.js";
+import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
+import { generateUniquePassword } from "./passwordGen.js";
 
 //Stripe credential setup
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -10,13 +13,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const handlePaymentSucceeded = async (customerStripeId, next) => {
 
     try{
+        const randomPassword = generateUniquePassword();
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(`${randomPassword}`, salt);
+         
          let user2 = await userModel.findOneAndUpdate(
                 { stripeCustomerId: customerStripeId },
                 { 
                 userType: 'premium',
-                lastPaymentDate: Date.now() 
+                lastPaymentDate: Date.now() ,
+                password : hashedPassword
                 }
             );
+
+            console.log(user2);
 
             console.log("Upgraded the account");
             console.log("Sending email to", user2.email);
@@ -28,7 +38,8 @@ const handlePaymentSucceeded = async (customerStripeId, next) => {
                 type : "welcome",
                 data: {
                     username : user2.name,
-                    email : user2.email
+                    email : user2.email ,
+                    password : randomPassword
                 }
             }
 
@@ -36,6 +47,7 @@ const handlePaymentSucceeded = async (customerStripeId, next) => {
             next();
     }
     catch(e){
+        console.log(e)
         return next(new ErrorHandler("Invalid Token", 400));
     }
 };
